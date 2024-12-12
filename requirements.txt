@@ -2,7 +2,7 @@ beautifulsoup4==4.12.3
 googlenewsdecoder==0.1.6
 newspaper3k==0.2.8
 nltk==3.8.1
-numpy==2.2.0
+numpy==1.24.4
 openai-whisper==20240930
 Pillow==10.1.0  # Kept one version
 pydub==0.25.1
