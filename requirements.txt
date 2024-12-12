@@ -13,7 +13,7 @@ sounddevice==0.5.1
 spacy==3.7.2
 speechrecognition==3.11.0  # Fixed capitalization
 streamlit==1.40.2
-torch==2.1.0+cpu  # Changed to CPU version
+torch==torch==2.1.0
 transformers==4.46.3
 youtube-transcript-api==0.6.2  # Standardized naming
 yt-dlp==2024.12.6
