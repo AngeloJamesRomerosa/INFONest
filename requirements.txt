@@ -8,7 +8,7 @@ Pillow==10.1.0  # Kept one version
 pydub==0.25.1
 pytextrank==3.2.5
 requests==2.32.3  # Fixed capitalization
-scipy==1.14.1
+scipy==1.9.3
 sounddevice==0.5.1
 spacy==3.7.2
 speechrecognition==3.11.0  # Fixed capitalization
