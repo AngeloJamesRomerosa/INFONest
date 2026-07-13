@@ -30,12 +30,17 @@ def run():
         st.session_state["history"] = {"Top News": [], "Hot Topics": [], "Search": []}
     if "dark_mode" not in st.session_state:
         st.session_state["dark_mode"] = True
+    if "app_mode" not in st.session_state:
+        st.session_state["app_mode"] = "📰 News"
 
     stop_words = stopwords_load()
 
     # Sidebar: Settings + History
     with st.sidebar:
         st.markdown("## ⚙️ Settings")
+        st.markdown("---")
+        st.markdown("**Mode**")
+        app_mode = st.radio("", ["📰 News", "📺 Video"], horizontal=True, key="app_mode")
         st.markdown("---")
         dark_mode = st.checkbox("🌙 Dark Mode", key="dark_mode")
         st.markdown("---")
@@ -129,11 +134,19 @@ def run():
         .stTabs [data-baseweb="tab-highlight"] { background-color: transparent; }
         .stTabs [data-baseweb="tab-border"] { display: none; }
 
-        /* Side margins — ad-space gutters */
+        /* Side margins */
         .main .block-container {
             padding-left: 6rem !important;
             padding-right: 6rem !important;
             max-width: 100% !important;
+        }
+
+        /* Search bar styling */
+        .search-row .stTextInput input {
+            border: 2px solid #ff6600 !important;
+            border-radius: 6px !important;
+            font-size: 15px !important;
+            padding: 8px 14px !important;
         }
         </style>
         """,
@@ -150,81 +163,71 @@ def run():
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-    (tab_top, tab_world, tab_nation, tab_business,
-     tab_tech, tab_ent, tab_sports, tab_science,
-     tab_health, tab_search, tab_video) = st.tabs([
-        "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
-        "💻 Tech", "🎬 Entertainment", "⚽ Sports",
-        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video"
-    ])
-
-    with tab_top:
-        with st.expander("ℹ️ What is Top News?"):
-            st.write("""
-                Top News are recent and relevant news about the Philippines gathered from different sources.
-                It covers the recent developments or topics that are currently trending in the country.
-
-                NOTE: Some articles may not load as not all websites allow scraping.
-                Loading the articles and summaries may take some time.
-            """)
-        st.subheader("Here Are the Top News For You!")
-        news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
-        display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News")
-
-    for tab, topic in [
-        (tab_world, "WORLD"),
-        (tab_nation, "NATION"),
-        (tab_business, "BUSINESS"),
-        (tab_tech, "TECHNOLOGY"),
-        (tab_ent, "ENTERTAINMENT"),
-        (tab_sports, "SPORTS"),
-        (tab_science, "SCIENCE"),
-        (tab_health, "HEALTH"),
-    ]:
-        with tab:
-            with st.expander(f"ℹ️ About {topic.capitalize()} News"):
-                st.write(f"Latest {topic.capitalize()} news articles. Please wait as loading may take some time.")
-            news_list = fetch_category_news(topic)
-            if news_list:
-                st.subheader(f"Here are the {topic.capitalize()} News for you!")
-                display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
-            else:
-                st.warning("No articles found. Please try again later.")
-
-    with tab_search:
-        with st.expander("ℹ️ How to Search"):
-            st.write("""
-                Enter any topic in the search bar to find related news articles.
-                The app will fetch up to 5 news articles related to your topic.
-
-                NOTE: Please wait as loading the articles and summaries may take some time.
-            """)
-        user_topic = st.text_input(
-            "Enter a topic to search:",
-            placeholder="e.g., Sports, Technology, Politics",
-            key="search_topic_input"
-        )
-        if user_topic:
-            user_topic = re.sub(r'[^\w\s]', '', user_topic).strip()
-            st.session_state["user_topic"] = user_topic
-            try:
-                with st.spinner("Fetching news articles..."):
-                    from urllib.parse import quote_plus
-                    news_list = fetch_news_search_topic(quote_plus(user_topic))
-                    st.session_state["search_news_list"] = news_list
-            except Exception as e:
-                st.error(f"Error fetching news: {e}")
-                st.session_state["search_news_list"] = []
-            if st.session_state.get("search_news_list"):
-                st.subheader(f"Here are some {user_topic.capitalize()} News for you!")
-                display_news(st.session_state["search_news_list"], 5, stop_words, bart_tokenizer, bart_model, "Search")
-            else:
-                st.warning("No news articles found for this topic.")
-        else:
-            st.info("Enter a topic above to get started.")
-
-    with tab_video:
+    if st.session_state["app_mode"] == "📺 Video":
         run_youtube_summarizer()
+    else:
+        # Search bar — always visible above the category tabs
+        st.markdown('<div class="search-row">', unsafe_allow_html=True)
+        search_query = st.text_input(
+            "",
+            placeholder="🔍 Search news articles...",
+            key="global_search"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        if search_query:
+            clean_query = re.sub(r'[^\w\s]', '', search_query).strip()
+            if clean_query:
+                try:
+                    with st.spinner("Fetching news..."):
+                        from urllib.parse import quote_plus
+                        news_list = fetch_news_search_topic(quote_plus(clean_query))
+                except Exception as e:
+                    st.error(f"Error fetching news: {e}")
+                    news_list = []
+                if news_list:
+                    st.subheader(f"Results for: {clean_query.capitalize()}")
+                    display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Search")
+                else:
+                    st.warning("No news articles found for this topic.")
+        else:
+            (tab_top, tab_world, tab_nation, tab_business,
+             tab_tech, tab_ent, tab_sports, tab_science, tab_health) = st.tabs([
+                "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
+                "💻 Tech", "🎬 Entertainment", "⚽ Sports", "🔬 Science", "🏥 Health"
+            ])
+
+            with tab_top:
+                with st.expander("ℹ️ What is Top News?"):
+                    st.write("""
+                        Top News are recent and relevant news about the Philippines gathered from different sources.
+                        It covers the recent developments or topics that are currently trending in the country.
+
+                        NOTE: Some articles may not load as not all websites allow scraping.
+                    """)
+                st.subheader("Here Are the Top News For You!")
+                news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
+                display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News")
+
+            for tab, topic in [
+                (tab_world, "WORLD"),
+                (tab_nation, "NATION"),
+                (tab_business, "BUSINESS"),
+                (tab_tech, "TECHNOLOGY"),
+                (tab_ent, "ENTERTAINMENT"),
+                (tab_sports, "SPORTS"),
+                (tab_science, "SCIENCE"),
+                (tab_health, "HEALTH"),
+            ]:
+                with tab:
+                    with st.expander(f"ℹ️ About {topic.capitalize()} News"):
+                        st.write(f"Latest {topic.capitalize()} news articles. Please wait as loading may take some time.")
+                    news_list = fetch_category_news(topic)
+                    if news_list:
+                        st.subheader(f"Here are the {topic.capitalize()} News for you!")
+                        display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
+                    else:
+                        st.warning("No articles found. Please try again later.")
 
 
 run()
