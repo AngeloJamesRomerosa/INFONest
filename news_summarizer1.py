@@ -86,14 +86,23 @@ def run():
     st.markdown(
         """
         <style>
-        /* Orange CNN-style navbar */
+        /* Orange CNN-style navbar — horizontally scrollable */
+        .stTabs > div:first-child { overflow-x: auto !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 0px;
             background-color: #ff6600;
             padding: 0 16px;
             border-radius: 0;
-            flex-wrap: nowrap;
-            overflow-x: auto;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.5) transparent;
+        }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { height: 3px; }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.5);
+            border-radius: 3px;
         }
         .stTabs [data-baseweb="tab"] {
             color: #ffffff;

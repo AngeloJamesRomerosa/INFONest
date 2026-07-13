@@ -86,14 +86,23 @@ def run():
     st.markdown(
         """
         <style>
-        /* Orange CNN-style navbar */
+        /* Orange CNN-style navbar — horizontally scrollable */
+        .stTabs > div:first-child { overflow-x: auto !important; }
         .stTabs [data-baseweb="tab-list"] {
             gap: 0px;
             background-color: #ff6600;
             padding: 0 16px;
             border-radius: 0;
-            flex-wrap: nowrap;
-            overflow-x: auto;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.5) transparent;
+        }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar { height: 3px; }
+        .stTabs [data-baseweb="tab-list"]::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.5);
+            border-radius: 3px;
         }
         .stTabs [data-baseweb="tab"] {
             color: #ffffff;
@@ -137,9 +146,9 @@ def run():
     (tab_top, tab_world, tab_nation, tab_business,
      tab_tech, tab_ent, tab_sports, tab_science,
      tab_health, tab_search, tab_video) = st.tabs([
-        "Top News", "World", "Nation", "Business",
-        "Tech", "Entertainment", "Sports",
-        "Science", "Health", "Search", "Video"
+        "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
+        "💻 Tech", "🎬 Entertainment", "⚽ Sports",
+        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video"
     ])
 
     with tab_top:
