@@ -5,6 +5,8 @@ import io
 import re
 import base64
 import logging
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from backend.news_fetcher import (
     fetch_news_from_rss, fetch_news_search_topic,
     fetch_category_news, get_actual_article_link
@@ -21,6 +23,12 @@ punkt_load()
 stop_words = stopwords_load()
 bart_model = load_bart_model()
 bart_tokenizer = load_bart_tokenizer()
+
+# Module-level article text cache — survives Streamlit reruns within the same process
+_article_text_cache = {}
+_cache_lock = threading.Lock()
+_active_prefetches = set()
+_prefetch_lock = threading.Lock()
 
 
 def fetch_news_poster(poster_link):
@@ -39,13 +47,71 @@ def image_to_base64(image):
     return base64.b64encode(buffered.getvalue()).decode()
 
 
-def _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles):
+def _download_one(args):
+    """Download and parse one article. Checks module-level cache before hitting the network."""
+    news, stop_words = args
+    try:
+        rss_link = news.link.text
+        news_link = get_actual_article_link(rss_link)
+        if not news_link:
+            return {"status": "no_link", "news": news}
+        with _cache_lock:
+            if news_link in _article_text_cache:
+                cached = _article_text_cache[news_link]
+                return {"status": "ok", "news": news, "news_link": news_link,
+                        "top_image": cached["top_image"], "clean_txt": cached["clean_txt"]}
+        news_data = Article(news_link)
+        news_data.download()
+        news_data.parse()
+        raw_text = extract_main_content(news_data.html) or news_data.text
+        clean_txt = clean_text(raw_text, stop_words)
+        with _cache_lock:
+            _article_text_cache[news_link] = {"top_image": news_data.top_image, "clean_txt": clean_txt}
+        return {"status": "ok", "news": news, "news_link": news_link,
+                "top_image": news_data.top_image, "clean_txt": clean_txt}
+    except Exception as e:
+        return {"status": "error", "news": news, "error": str(e)}
+
+
+def _prefetch_all_worker(stop_words):
+    """Background daemon thread: pre-downloads articles for all category tabs."""
+    categories = ["WORLD", "NATION", "BUSINESS", "TECHNOLOGY",
+                  "ENTERTAINMENT", "SPORTS", "SCIENCE", "HEALTH"]
+    for topic in categories:
+        try:
+            news_list = fetch_category_news(topic)
+            if news_list:
+                with ThreadPoolExecutor(max_workers=5) as ex:
+                    list(ex.map(_download_one, [(n, stop_words) for n in news_list[:5]]))
+        except Exception:
+            pass
+    with _prefetch_lock:
+        _active_prefetches.discard("all_categories")
+
+
+def prefetch_all_categories(stop_words):
+    """Fire-and-forget: start one background thread to pre-download all category tabs."""
+    with _prefetch_lock:
+        if "all_categories" in _active_prefetches:
+            return
+        _active_prefetches.add("all_categories")
+    t = threading.Thread(target=_prefetch_all_worker, args=(stop_words,), daemon=True)
+    t.start()
+
+
+def _render_article(news, c, news_link, top_image, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles):
     st.write(f'**({c}) {news.title.text}**')
-    fetch_news_poster(news_data.top_image)
-    with st.expander(news.title.text):
+    fetch_news_poster(top_image)
+    # Use session-state summary cache — BART runs at most once per article per session
+    summary_cache = st.session_state.setdefault("summary_cache", {})
+    if news_link in summary_cache:
+        bart_summary = summary_cache[news_link]
+    else:
         num_sentences = 5
         textrank_summary = enhanced_textrank_summarize(clean_txt, num_sentences)
         bart_summary = bart_summarize(bart_tokenizer, textrank_summary, bart_model, num_sentences)
+        summary_cache[news_link] = bart_summary
+    with st.expander(news.title.text):
         st.markdown(f'<h6 style="text-align: justify;">{bart_summary}</h6>', unsafe_allow_html=True)
         st.markdown(f"[Read more at source]({news_link})")
         if news.title.text not in displayed_titles:
@@ -58,35 +124,30 @@ def display_news(list_of_news, news_quantity, stop_words, bart_tokenizer, bart_m
     history = st.session_state["history"].get(category, [])
     displayed_titles = set(article["title"] for article in history)
 
+    # Download all articles in parallel, then summarize sequentially
+    with ThreadPoolExecutor(max_workers=min(news_quantity, 5)) as executor:
+        results = list(executor.map(_download_one, [(news, stop_words) for news in list_of_news[:news_quantity]]))
+
     articles = []
-    for c, news in enumerate(list_of_news[:news_quantity], start=1):
-        rss_link = news.link.text
-        news_link = get_actual_article_link(rss_link)
-        if not news_link:
+    for i, r in enumerate(results, start=1):
+        if r["status"] == "no_link":
             st.warning("Could not retrieve the article link.")
-            continue
-        news_data = Article(news_link)
-        try:
-            news_data.download()
-            news_data.parse()
-            raw_text = extract_main_content(news_data.html) or news_data.text
-            clean_txt = clean_text(raw_text, stop_words)
-        except Exception as e:
-            if "403 Client Error" in str(e):
-                st.info(f"Skipping article due to download restriction: {news.title.text}. [Read more at source.]({news_link})")
-            continue
-        articles.append((c, news, news_link, news_data, clean_txt))
+        elif r["status"] == "error":
+            if "403 Client Error" in r.get("error", ""):
+                st.info(f"Skipping article due to download restriction: {r['news'].title.text}.")
+        else:
+            articles.append((i, r["news"], r["news_link"], r["top_image"], r["clean_txt"]))
 
     if layout == "🗂️ Grid":
         pairs = [articles[i:i+2] for i in range(0, len(articles), 2)]
         for pair in pairs:
             cols = st.columns(2)
-            for col, (c, news, news_link, news_data, clean_txt) in zip(cols, pair):
+            for col, (c, news, news_link, top_image, clean_txt) in zip(cols, pair):
                 with col:
-                    _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
+                    _render_article(news, c, news_link, top_image, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
     else:
-        for c, news, news_link, news_data, clean_txt in articles:
-            _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
+        for c, news, news_link, top_image, clean_txt in articles:
+            _render_article(news, c, news_link, top_image, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
 
     st.session_state["history"][category] = history[-10:]
 

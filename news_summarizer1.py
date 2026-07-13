@@ -17,7 +17,7 @@ from backend.news_fetcher import (
 )
 from backend.news_processor import stopwords_load, punkt_load
 from backend.models import load_bart_model, load_bart_tokenizer
-from frontend.news_page import display_news, image_to_base64
+from frontend.news_page import display_news, image_to_base64, prefetch_all_categories
 from frontend.video_page import run_youtube_summarizer, display_video_history_in_sidebar
 
 punkt_load()
@@ -35,6 +35,8 @@ def run():
         st.session_state["app_mode"] = "📰 News"
     if "layout_mode" not in st.session_state:
         st.session_state["layout_mode"] = "📋 List"
+    if "summary_cache" not in st.session_state:
+        st.session_state["summary_cache"] = {}
 
     stop_words = stopwords_load()
 
@@ -165,6 +167,9 @@ def run():
     if st.session_state["app_mode"] == "📺 Video":
         run_youtube_summarizer()
     else:
+        # Kick off background pre-download of all category tabs (runs once per process)
+        prefetch_all_categories(stop_words)
+
         # Search bar — always visible
         st.markdown('<div class="search-row">', unsafe_allow_html=True)
         search_query = st.text_input(
