@@ -57,20 +57,28 @@ def run():
         mode_css = """
         <style>
         .stApp { background-color: #1a1a2e !important; }
-        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
-        .stApp label, .stApp .stMarkdown { color: #fafafa !important; }
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+        .stApp span, .stApp label, .stMarkdown, .stMarkdown *,
+        [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * { color: #fafafa !important; }
         section[data-testid="stSidebar"] { background-color: #16213e !important; }
-        .stImage img { border: 2px solid rgba(255,255,255,0.25); border-radius: 6px; }
+        section[data-testid="stSidebar"] * { color: #fafafa !important; }
+        .stImage img, [data-testid="stImage"] img, .element-container img {
+            border: 2px solid rgba(255,255,255,0.35) !important; border-radius: 6px;
+        }
         </style>
         """
     else:
         mode_css = """
         <style>
         .stApp { background-color: #f8f9fa !important; }
-        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
-        .stApp label, .stApp .stMarkdown { color: #0e1117 !important; }
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+        .stApp span, .stApp label, .stMarkdown, .stMarkdown *,
+        [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] * { color: #1a1a2e !important; }
         section[data-testid="stSidebar"] { background-color: #ffffff !important; }
-        .stImage img { border: 2px solid rgba(0,0,0,0.25); border-radius: 6px; }
+        section[data-testid="stSidebar"] * { color: #1a1a2e !important; }
+        .stImage img, [data-testid="stImage"] img, .element-container img {
+            border: 2px solid #1a1a2e !important; border-radius: 6px;
+        }
         </style>
         """
     st.markdown(mode_css, unsafe_allow_html=True)
