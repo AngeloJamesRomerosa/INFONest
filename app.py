@@ -33,6 +33,8 @@ def run():
         st.session_state["dark_mode"] = True
     if "app_mode" not in st.session_state:
         st.session_state["app_mode"] = "📰 News"
+    if "layout_mode" not in st.session_state:
+        st.session_state["layout_mode"] = "📋 List"
 
     stop_words = stopwords_load()
 
@@ -42,6 +44,9 @@ def run():
         st.markdown("---")
         st.markdown("**Mode**")
         app_mode = st.radio("", ["📰 News", "📺 Video"], horizontal=True, key="app_mode")
+        st.markdown("---")
+        st.markdown("**Layout**")
+        layout_mode = st.radio("", ["📋 List", "🗂️ Grid"], horizontal=True, key="layout_mode")
         st.markdown("---")
         dark_mode = st.checkbox("🌙 Dark Mode", key="dark_mode")
         st.markdown("---")
@@ -146,7 +151,7 @@ def run():
         unsafe_allow_html=True,
     )
 
-    st.title("INFONest🇵🇭: Get The News!📰")
+    st.markdown("<h1 style='text-align: center;'>INFONest🇵🇭: Get The News!📰</h1>", unsafe_allow_html=True)
     image = Image.open('./Meta/newspaper4.png')
     st.markdown(
         '<div style="display: flex; justify-content: center;">'
@@ -181,7 +186,7 @@ def run():
                     news_list = []
                 if news_list:
                     st.subheader(f"Results for: {clean_query.capitalize()}")
-                    display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Search")
+                    display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Search", st.session_state["layout_mode"])
                 else:
                     st.warning("No news articles found for this topic.")
 
@@ -240,7 +245,7 @@ def run():
                     """)
                 st.subheader("Here Are the Top News For You!")
                 news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
-                display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News")
+                display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News", st.session_state["layout_mode"])
 
             for tab, topic in [
                 (tab_world, "WORLD"),
@@ -258,7 +263,7 @@ def run():
                     news_list = fetch_category_news(topic)
                     if news_list:
                         st.subheader(f"Here are the {topic.capitalize()} News for you!")
-                        display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
+                        display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics", st.session_state["layout_mode"])
                     else:
                         st.warning("No articles found. Please try again later.")
 

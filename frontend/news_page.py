@@ -39,12 +39,27 @@ def image_to_base64(image):
     return base64.b64encode(buffered.getvalue()).decode()
 
 
-def display_news(list_of_news, news_quantity, stop_words, bart_tokenizer, bart_model, category):
+def _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles):
+    st.write(f'**({c}) {news.title.text}**')
+    fetch_news_poster(news_data.top_image)
+    with st.expander(news.title.text):
+        num_sentences = 5
+        textrank_summary = enhanced_textrank_summarize(clean_txt, num_sentences)
+        bart_summary = bart_summarize(bart_tokenizer, textrank_summary, bart_model, num_sentences)
+        st.markdown(f'<h6 style="text-align: justify;">{bart_summary}</h6>', unsafe_allow_html=True)
+        st.markdown(f"[Read more at source]({news_link})")
+        if news.title.text not in displayed_titles:
+            history.append({"title": news.title.text, "summary": bart_summary})
+            displayed_titles.add(news.title.text)
+    st.success(f"Published Date: {news.pubDate.text}")
+
+
+def display_news(list_of_news, news_quantity, stop_words, bart_tokenizer, bart_model, category, layout="📋 List"):
     history = st.session_state["history"].get(category, [])
     displayed_titles = set(article["title"] for article in history)
 
+    articles = []
     for c, news in enumerate(list_of_news[:news_quantity], start=1):
-        st.write(f'**({c}) {news.title.text}**')
         rss_link = news.link.text
         news_link = get_actual_article_link(rss_link)
         if not news_link:
@@ -60,17 +75,19 @@ def display_news(list_of_news, news_quantity, stop_words, bart_tokenizer, bart_m
             if "403 Client Error" in str(e):
                 st.info(f"Skipping article due to download restriction: {news.title.text}. [Read more at source.]({news_link})")
             continue
-        fetch_news_poster(news_data.top_image)
-        with st.expander(news.title.text):
-            num_sentences = 5
-            textrank_summary = enhanced_textrank_summarize(clean_txt, num_sentences)
-            bart_summary = bart_summarize(bart_tokenizer, textrank_summary, bart_model, num_sentences)
-            st.markdown(f'<h6 style="text-align: justify;">{bart_summary}</h6>', unsafe_allow_html=True)
-            st.markdown(f"[Read more at source]({news_link})")
-            if news.title.text not in displayed_titles:
-                history.append({"title": news.title.text, "summary": bart_summary})
-                displayed_titles.add(news.title.text)
-        st.success(f"Published Date: {news.pubDate.text}")
+        articles.append((c, news, news_link, news_data, clean_txt))
+
+    if layout == "🗂️ Grid":
+        pairs = [articles[i:i+2] for i in range(0, len(articles), 2)]
+        for pair in pairs:
+            cols = st.columns(2)
+            for col, (c, news, news_link, news_data, clean_txt) in zip(cols, pair):
+                with col:
+                    _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
+    else:
+        for c, news, news_link, news_data, clean_txt in articles:
+            _render_article(news, c, news_link, news_data, clean_txt, stop_words, bart_tokenizer, bart_model, history, displayed_titles)
+
     st.session_state["history"][category] = history[-10:]
 
 
