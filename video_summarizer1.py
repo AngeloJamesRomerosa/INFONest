@@ -1,7 +1,7 @@
 import streamlit as st
 import spacy
 import yt_dlp
-import whisper
+from faster_whisper import WhisperModel
 from pydub import AudioSegment
 import os
 import torch
@@ -20,7 +20,7 @@ from PIL import Image
 # Cache Whisper model loading
 @st.cache_resource
 def load_whisper_model():
-    return whisper.load_model("base").to("cpu")
+    return WhisperModel("base", device="cpu", compute_type="int8")
 
 # Cache BART model and tokenizer loading
 #@st.cache_resource
@@ -198,31 +198,12 @@ def clean_subtitles(subtitle_url):
 # Cache transcribing audio
 @st.cache_data(ttl=None, max_entries=80)
 def transcribe_audio(audio_path, _model, chunk_length_ms=20000):
-    #st.write("Transcribing audio in chunks...")
-    audio = AudioSegment.from_mp3(audio_path)
-    transcriptions = []
-    for start_ms in range(0, len(audio), chunk_length_ms):
-        end_ms = min(start_ms + chunk_length_ms, len(audio))
-        chunk = audio[start_ms:end_ms]
-        chunk_samples = np.array(chunk.get_array_of_samples())
-        chunk_samples = chunk_samples.astype(np.float32) / np.iinfo(chunk_samples.dtype).max
-        chunk_samples = chunk_samples.reshape(-1, chunk.channels).mean(axis=1)
-        original_sample_rate = chunk.frame_rate
-        target_sample_rate = 16000
-        num_samples = int(len(chunk_samples) * target_sample_rate / original_sample_rate)
-        resampled_chunk = resample(chunk_samples, num_samples)
-        resampled_chunk = torch.tensor(resampled_chunk).to("cpu")
-        try:
-            with torch.no_grad():
-                result = _model.transcribe(audio=resampled_chunk, language="en", fp16=torch.cuda.is_available())
-                transcription_text = result.get("text", "")
-                if transcription_text:
-                    transcriptions.append(transcription_text)
-        except Exception as e:
-            st.error(f"Error transcribing chunk: {str(e)}")
-        finally:
-            torch.cuda.empty_cache()
-    return " ".join(transcriptions)
+    try:
+        segments, _ = _model.transcribe(audio_path, language="en")
+        return " ".join([seg.text for seg in segments])
+    except Exception as e:
+        st.error(f"Error transcribing audio: {str(e)}")
+        return ""
 # Function to fetch videos from a YouTube playlists
 @st.cache_data(ttl=None, max_entries=80)
 def fetch_videos_from_playlist(playlist_url, limit=10):
