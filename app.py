@@ -29,7 +29,7 @@ def run():
     if "history" not in st.session_state:
         st.session_state["history"] = {"Top News": [], "Hot Topics": [], "Search": []}
     if "dark_mode" not in st.session_state:
-        st.session_state["dark_mode"] = False
+        st.session_state["dark_mode"] = True
 
     stop_words = stopwords_load()
 
@@ -56,19 +56,21 @@ def run():
     if st.session_state["dark_mode"]:
         mode_css = """
         <style>
-        .stApp { background-color: #0e1117 !important; }
+        .stApp { background-color: #1a1a2e !important; }
         .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
         .stApp label, .stApp .stMarkdown { color: #fafafa !important; }
-        section[data-testid="stSidebar"] { background-color: #1a1a2e !important; }
+        section[data-testid="stSidebar"] { background-color: #16213e !important; }
+        .stImage img { border: 2px solid rgba(255,255,255,0.25); border-radius: 6px; }
         </style>
         """
     else:
         mode_css = """
         <style>
-        .stApp { background-color: #ffffff !important; }
+        .stApp { background-color: #f8f9fa !important; }
         .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
         .stApp label, .stApp .stMarkdown { color: #0e1117 !important; }
-        section[data-testid="stSidebar"] { background-color: #f8f9fa !important; }
+        section[data-testid="stSidebar"] { background-color: #ffffff !important; }
+        .stImage img { border: 2px solid rgba(0,0,0,0.25); border-radius: 6px; }
         </style>
         """
     st.markdown(mode_css, unsafe_allow_html=True)
