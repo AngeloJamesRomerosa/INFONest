@@ -91,15 +91,12 @@ def run():
     st.markdown(
         """
         <style>
-        /* Clear overflow on Streamlit ancestors so sticky works */
-        [data-testid="stMain"], [data-testid="stMain"] > div,
-        .block-container, .stTabs, .stTabs > div:first-child {
-            overflow: visible !important;
-        }
-        /* Orange CNN-style navbar — sticky + horizontally scrollable */
+        /* Orange CNN-style navbar — fixed so it always follows on scroll */
         .stTabs [data-baseweb="tab-list"] {
-            position: sticky !important;
+            position: fixed !important;
             top: 0 !important;
+            left: 21rem !important;
+            right: 0 !important;
             z-index: 9999 !important;
             gap: 0px;
             background-color: #ff6600;
@@ -116,6 +113,8 @@ def run():
             background: rgba(255,255,255,0.5);
             border-radius: 3px;
         }
+        /* Push tab content down so it's not hidden behind the fixed bar */
+        .stTabs [data-baseweb="tab-panel"] { padding-top: 48px !important; }
         .stTabs [data-baseweb="tab"] {
             color: #ffffff;
             background-color: transparent;
@@ -166,7 +165,7 @@ def run():
     if st.session_state["app_mode"] == "📺 Video":
         run_youtube_summarizer()
     else:
-        # Search bar — always visible above the category tabs
+        # Search bar — always visible
         st.markdown('<div class="search-row">', unsafe_allow_html=True)
         search_query = st.text_input(
             "",
@@ -175,6 +174,7 @@ def run():
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
+        # Show search results above the tab bar when searching
         if search_query:
             clean_query = re.sub(r'[^\w\s]', '', search_query).strip()
             if clean_query:
@@ -190,13 +190,16 @@ def run():
                     display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Search")
                 else:
                     st.warning("No news articles found for this topic.")
-        else:
-            (tab_top, tab_world, tab_nation, tab_business,
-             tab_tech, tab_ent, tab_sports, tab_science, tab_health) = st.tabs([
-                "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
-                "💻 Tech", "🎬 Entertainment", "⚽ Sports", "🔬 Science", "🏥 Health"
-            ])
 
+        # Tabs are ALWAYS rendered so the orange navbar never disappears
+        (tab_top, tab_world, tab_nation, tab_business,
+         tab_tech, tab_ent, tab_sports, tab_science, tab_health) = st.tabs([
+            "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
+            "💻 Tech", "🎬 Entertainment", "⚽ Sports", "🔬 Science", "🏥 Health"
+        ])
+
+        # Tab content only shows when not searching
+        if not search_query:
             with tab_top:
                 with st.expander("ℹ️ What is Top News?"):
                     st.write("""
