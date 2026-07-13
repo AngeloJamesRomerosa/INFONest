@@ -91,13 +91,8 @@ def run():
     st.markdown(
         """
         <style>
-        /* Orange CNN-style navbar — fixed so it always follows on scroll */
+        /* Orange CNN-style navbar */
         .stTabs [data-baseweb="tab-list"] {
-            position: fixed !important;
-            top: 0 !important;
-            left: 21rem !important;
-            right: 0 !important;
-            z-index: 9999 !important;
             gap: 0px;
             background-color: #ff6600;
             padding: 0 16px;
@@ -113,8 +108,6 @@ def run():
             background: rgba(255,255,255,0.5);
             border-radius: 3px;
         }
-        /* Push tab content down so it's not hidden behind the fixed bar */
-        .stTabs [data-baseweb="tab-panel"] { padding-top: 48px !important; }
         .stTabs [data-baseweb="tab"] {
             color: #ffffff;
             background-color: transparent;
