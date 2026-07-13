@@ -115,11 +115,9 @@ def run():
 
         /* Side margins — ad-space gutters */
         .main .block-container {
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 2rem;
-            padding-right: 2rem;
+            padding-left: 6rem !important;
+            padding-right: 6rem !important;
+            max-width: 100% !important;
         }
         </style>
         """,

@@ -115,11 +115,9 @@ def run():
 
         /* Side margins — ad-space gutters */
         .main .block-container {
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 2rem;
-            padding-right: 2rem;
+            padding-left: 6rem !important;
+            padding-right: 6rem !important;
+            max-width: 100% !important;
         }
         </style>
         """,
@@ -139,9 +137,9 @@ def run():
     (tab_top, tab_world, tab_nation, tab_business,
      tab_tech, tab_ent, tab_sports, tab_science,
      tab_health, tab_search, tab_video) = st.tabs([
-        "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
-        "💻 Tech", "🎬 Entertainment", "⚽ Sports",
-        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video"
+        "Top News", "World", "Nation", "Business",
+        "Tech", "Entertainment", "Sports",
+        "Science", "Health", "Search", "Video"
     ])
 
     with tab_top:
