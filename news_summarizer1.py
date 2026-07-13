@@ -28,16 +28,58 @@ bart_tokenizer = load_bart_tokenizer()
 def run():
     if "history" not in st.session_state:
         st.session_state["history"] = {"Top News": [], "Hot Topics": [], "Search": []}
+    if "dark_mode" not in st.session_state:
+        st.session_state["dark_mode"] = False
 
     stop_words = stopwords_load()
+
+    # Sidebar: Settings + History
+    with st.sidebar:
+        st.markdown("## ⚙️ Settings")
+        st.markdown("---")
+        dark_mode = st.toggle("🌙 Dark Mode", key="dark_mode")
+        st.markdown("---")
+        st.markdown("## 📋 History")
+        for cat in ["Top News", "Hot Topics", "Search"]:
+            with st.expander(f"{cat} History", expanded=False):
+                history_data = st.session_state["history"].get(cat, [])
+                if history_data:
+                    for i, article in enumerate(history_data[-10:], 1):
+                        st.markdown(f"**{i}. {article['title']}**")
+                        st.markdown(f"{article['summary']}")
+                        st.markdown("---")
+                else:
+                    st.write("No history yet.")
+        display_video_history_in_sidebar()
+
+    # Dark/light mode CSS
+    if st.session_state["dark_mode"]:
+        mode_css = """
+        <style>
+        .stApp { background-color: #0e1117 !important; }
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        .stApp label, .stApp .stMarkdown { color: #fafafa !important; }
+        section[data-testid="stSidebar"] { background-color: #1a1a2e !important; }
+        </style>
+        """
+    else:
+        mode_css = """
+        <style>
+        .stApp { background-color: #ffffff !important; }
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        .stApp label, .stApp .stMarkdown { color: #0e1117 !important; }
+        section[data-testid="stSidebar"] { background-color: #f8f9fa !important; }
+        </style>
+        """
+    st.markdown(mode_css, unsafe_allow_html=True)
 
     st.markdown(
         """
         <style>
-        /* CNN-style red navbar */
+        /* Orange CNN-style navbar */
         .stTabs [data-baseweb="tab-list"] {
             gap: 0px;
-            background-color: #cc0000;
+            background-color: #ff6600;
             padding: 0 16px;
             border-radius: 0;
             flex-wrap: nowrap;
@@ -58,11 +100,16 @@ def run():
             color: #ffffff !important;
             border-bottom: 3px solid #ffffff;
         }
-        .stTabs [data-baseweb="tab-highlight"] {
-            background-color: transparent;
-        }
-        .stTabs [data-baseweb="tab-border"] {
-            display: none;
+        .stTabs [data-baseweb="tab-highlight"] { background-color: transparent; }
+        .stTabs [data-baseweb="tab-border"] { display: none; }
+
+        /* Side margins — ad-space gutters */
+        .main .block-container {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 2rem;
+            padding-right: 2rem;
         }
         </style>
         """,
@@ -73,7 +120,7 @@ def run():
     image = Image.open('./Meta/newspaper4.png')
     st.markdown(
         '<div style="display: flex; justify-content: center;">'
-        '<img src="data:image/png;base64,{}" width="300"/>'
+        '<img src="data:image/png;base64,{}" width="200"/>'
         '</div>'.format(image_to_base64(image)),
         unsafe_allow_html=True,
     )
@@ -93,8 +140,8 @@ def run():
                 Top News are recent and relevant news about the Philippines gathered from different sources.
                 It covers the recent developments or topics that are currently trending in the country.
 
-                NOTE: Some articles may not load as not all websites allow scraping. Please wait as
-                loading the articles and summaries may take some time.
+                NOTE: Some articles may not load as not all websites allow scraping.
+                Loading the articles and summaries may take some time.
             """)
         st.subheader("Here Are the Top News For You!")
         news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
@@ -154,22 +201,6 @@ def run():
 
     with tab_video:
         run_youtube_summarizer()
-
-    st.sidebar.header("📋 History")
-    st.sidebar.markdown("---")
-
-    for cat in ["Top News", "Hot Topics", "Search"]:
-        with st.sidebar.expander(f"{cat} History", expanded=False):
-            history_data = st.session_state["history"].get(cat, [])
-            if history_data:
-                for i, article in enumerate(history_data[-10:], 1):
-                    st.markdown(f"**{i}. {article['title']}**")
-                    st.markdown(f"{article['summary']}")
-                    st.markdown("---")
-            else:
-                st.write("No history yet.")
-
-    display_video_history_in_sidebar()
 
 
 run()

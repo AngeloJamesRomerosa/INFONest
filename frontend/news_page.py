@@ -30,7 +30,7 @@ def fetch_news_poster(poster_link):
         image = Image.open(io.BytesIO(u.read()))
     except Exception:
         image = Image.open('./Meta/no_image.jpg')
-    st.image(image, use_column_width=True)
+    st.image(image, width=260)
 
 
 def image_to_base64(image):
