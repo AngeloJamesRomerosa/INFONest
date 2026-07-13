@@ -37,7 +37,7 @@ def run():
     with st.sidebar:
         st.markdown("## ⚙️ Settings")
         st.markdown("---")
-        dark_mode = st.toggle("🌙 Dark Mode", key="dark_mode")
+        dark_mode = st.checkbox("🌙 Dark Mode", key="dark_mode")
         st.markdown("---")
         st.markdown("## 📋 History")
         for cat in ["Top News", "Hot Topics", "Search"]:
