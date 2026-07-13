@@ -30,7 +30,7 @@ def run():
     if "history" not in st.session_state:
         st.session_state["history"] = {"Top News": [], "Hot Topics": [], "Search": []}
     if "dark_mode" not in st.session_state:
-        st.session_state["dark_mode"] = True
+        st.session_state["dark_mode"] = "🌙 Dark"
     if "app_mode" not in st.session_state:
         st.session_state["app_mode"] = "📰 News"
     if "layout_mode" not in st.session_state:
@@ -48,7 +48,8 @@ def run():
         st.markdown("**Layout**")
         layout_mode = st.radio("", ["📋 List", "🗂️ Grid"], horizontal=True, key="layout_mode")
         st.markdown("---")
-        dark_mode = st.checkbox("🌙 Dark Mode", key="dark_mode")
+        st.markdown("**Theme**")
+        dark_mode = st.radio("", ["☀️ Light", "🌙 Dark"], horizontal=True, key="dark_mode")
         st.markdown("---")
         st.markdown("## 📋 History")
         for cat in ["Top News", "Hot Topics", "Search"]:
@@ -64,7 +65,7 @@ def run():
         display_video_history_in_sidebar()
 
     # Dark/light mode CSS
-    if st.session_state["dark_mode"]:
+    if st.session_state["dark_mode"] == "🌙 Dark":
         mode_css = """
         <style>
         .stApp { background-color: #1a1a2e !important; }
