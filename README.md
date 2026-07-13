@@ -79,7 +79,13 @@ INFONest/
 ```bash
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-streamlit run app.py
+streamlit run app.py --server.port 8000
+```
+
+Then open your browser and go to:
+
+```
+http://localhost:8000
 ```
 
 ---
