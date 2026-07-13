@@ -36,6 +36,11 @@ A Philippine-focused news aggregator and summarizer built with Streamlit. Fetche
 - News article images scaled to 260px width with visible borders in both themes
 - Side gutters on the main content area
 
+### ⚡ Performance
+- **Parallel article downloads** — all articles in a tab are downloaded simultaneously using `ThreadPoolExecutor` instead of one by one
+- **Per-URL summary cache** — BART output is stored in session state by article URL; revisiting a tab skips re-summarization entirely
+- **Background prefetch** — when News mode loads, a daemon thread pre-downloads articles for all 8 category tabs in the background so they are ready before the user clicks them
+
 ---
 
 ## Tech Stack
