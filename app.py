@@ -34,21 +34,24 @@ def run():
     st.markdown(
         """
         <style>
-        /* Tab bar styling */
+        /* CNN-style red navbar */
         .stTabs [data-baseweb="tab-list"] {
             gap: 0px;
             background-color: #cc0000;
             padding: 0 16px;
             border-radius: 0;
+            flex-wrap: nowrap;
+            overflow-x: auto;
         }
         .stTabs [data-baseweb="tab"] {
             color: #ffffff;
             background-color: transparent;
             border: none;
-            padding: 12px 20px;
-            font-size: 15px;
+            padding: 12px 16px;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.3px;
+            white-space: nowrap;
         }
         .stTabs [aria-selected="true"] {
             background-color: rgba(255,255,255,0.2) !important;
@@ -76,9 +79,15 @@ def run():
     )
     st.markdown("<br>", unsafe_allow_html=True)
 
-    tab1, tab2, tab3, tab4 = st.tabs(["📰 Top News", "🔥 Hot Topics", "🔍 Search", "📺 Video News"])
+    (tab_top, tab_world, tab_nation, tab_business,
+     tab_tech, tab_ent, tab_sports, tab_science,
+     tab_health, tab_search, tab_video) = st.tabs([
+        "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
+        "💻 Technology", "🎬 Entertainment", "⚽ Sports",
+        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video News"
+    ])
 
-    with tab1:
+    with tab_top:
         with st.expander("ℹ️ What is Top News?"):
             st.write("""
                 Top News are recent and relevant news about the Philippines gathered from different sources.
@@ -91,22 +100,27 @@ def run():
         news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
         display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News")
 
-    with tab2:
-        with st.expander("ℹ️ What is Hot Topics?"):
-            st.write("""
-                Hot Topics offers a selection of topics from which you can choose.
-                Topics include: WORLD, NATION, BUSINESS, TECHNOLOGY, ENTERTAINMENT, SPORTS, SCIENCE, and HEALTH.
+    for tab, topic in [
+        (tab_world, "WORLD"),
+        (tab_nation, "NATION"),
+        (tab_business, "BUSINESS"),
+        (tab_tech, "TECHNOLOGY"),
+        (tab_ent, "ENTERTAINMENT"),
+        (tab_sports, "SPORTS"),
+        (tab_science, "SCIENCE"),
+        (tab_health, "HEALTH"),
+    ]:
+        with tab:
+            with st.expander(f"ℹ️ About {topic.capitalize()} News"):
+                st.write(f"Latest {topic.capitalize()} news articles. Please wait as loading may take some time.")
+            news_list = fetch_category_news(topic)
+            if news_list:
+                st.subheader(f"Here are the {topic.capitalize()} News for you!")
+                display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
+            else:
+                st.warning("No articles found. Please try again later.")
 
-                NOTE: Please wait as loading the articles and summaries may take some time.
-            """)
-        av_topics = ['WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
-        chosen_topic = st.radio("Choose a Topic:", av_topics, horizontal=True)
-        news_list = fetch_category_news(chosen_topic)
-        if news_list:
-            st.subheader(f"Here are the {chosen_topic} News for you!")
-            display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
-
-    with tab3:
+    with tab_search:
         with st.expander("ℹ️ How to Search"):
             st.write("""
                 Enter any topic in the search bar to find related news articles.
@@ -138,7 +152,7 @@ def run():
         else:
             st.info("Enter a topic above to get started.")
 
-    with tab4:
+    with tab_video:
         run_youtube_summarizer()
 
     st.sidebar.header("📋 History")
