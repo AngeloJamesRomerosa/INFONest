@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import logging
 import re
 from PIL import Image
@@ -190,6 +191,42 @@ def run():
             "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
             "💻 Tech", "🎬 Entertainment", "⚽ Sports", "🔬 Science", "🏥 Health"
         ])
+
+        # JS: walk up from the tab-list, clear overflow on intermediate elements,
+        # stop at the real scroll container, then apply position:sticky
+        components.html("""
+        <script>
+        (function() {
+            function applySticky() {
+                try {
+                    var doc = window.parent.document;
+                    var tabList = doc.querySelector('[data-baseweb="tab-list"]');
+                    if (!tabList) { setTimeout(applySticky, 300); return; }
+                    if (tabList.dataset.stickyDone) return;
+                    tabList.dataset.stickyDone = '1';
+                    var el = tabList.parentElement;
+                    while (el && el !== doc.body) {
+                        var oy = window.parent.getComputedStyle(el).overflowY;
+                        if (oy === 'auto' || oy === 'scroll') break;
+                        el.style.setProperty('overflow', 'visible', 'important');
+                        el = el.parentElement;
+                    }
+                    tabList.style.setProperty('position', 'sticky', 'important');
+                    tabList.style.setProperty('top', '0', 'important');
+                    tabList.style.setProperty('z-index', '9999', 'important');
+                } catch(e) {}
+            }
+            setTimeout(applySticky, 800);
+            var obs = new MutationObserver(function() {
+                try {
+                    var tl = window.parent.document.querySelector('[data-baseweb="tab-list"]');
+                    if (tl && !tl.dataset.stickyDone) applySticky();
+                } catch(e) {}
+            });
+            try { obs.observe(window.parent.document.body, {childList:true, subtree:true}); } catch(e) {}
+        })();
+        </script>
+        """, height=0)
 
         # Tab content only shows when not searching
         if not search_query:
