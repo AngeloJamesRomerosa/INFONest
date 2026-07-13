@@ -76,10 +76,6 @@ def enhanced_textrank_summarize(text, num_sentences=5):
     return "Summary is not Available..."
 
 
-def count_sentences(text):
-    return len(sent_tokenize(text))
-
-
 @st.cache_data(ttl=None, max_entries=80)
 def bart_summarize(_bart_tokenizer, text, _bart_model, num_sentences=5):
     if text:

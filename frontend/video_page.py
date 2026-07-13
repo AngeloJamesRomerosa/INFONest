@@ -100,8 +100,7 @@ def display_videos(feed, bart_model, bart_tokenizer, selected_channel, is_playli
                             user_data["video_history"].insert(0, {"title": video_title, "summary": summary})
                             user_data["video_history"] = user_data["video_history"][:20]
                         else:
-                            if "download_attempted" in globals() and globals()['download_attempted']:
-                                user_data["download_count"] += 1
+                            user_data["download_count"] += 1
                             st.error("Could not transcribe the audio.")
                             user_data[f"retry_{key}"] = True
                 except Exception as e:

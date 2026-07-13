@@ -38,7 +38,6 @@ def download_audio(url, output_path="downloads/audio"):
             'Referer': 'https://www.youtube.com/',
         },
     }
-    download_attempted = True
     try:
         if not os.path.exists('cookies.txt'):
             logger.error("cookies.txt not found. Proceeding without cookies.")
@@ -64,8 +63,6 @@ def download_audio(url, output_path="downloads/audio"):
             except Exception as format_error:
                 logger.error(f"Could not retrieve formats for video {video_id}: {str(format_error)}")
         return None
-    finally:
-        globals()['download_attempted'] = download_attempted
 
 
 def extract_subtitles(url):
@@ -120,7 +117,7 @@ def clean_subtitles(subtitle_url):
 
 
 @st.cache_data(ttl=None, max_entries=80)
-def transcribe_audio(audio_path, _model, chunk_length_ms=20000):
+def transcribe_audio(audio_path, _model):
     try:
         segments, _ = _model.transcribe(audio_path, language="en")
         return " ".join([seg.text for seg in segments])
