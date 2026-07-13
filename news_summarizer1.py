@@ -86,9 +86,12 @@ def run():
     st.markdown(
         """
         <style>
-        /* Orange CNN-style navbar — horizontally scrollable */
-        .stTabs > div:first-child { overflow-x: auto !important; }
+        /* Orange CNN-style navbar — sticky + horizontally scrollable */
+        .stTabs > div:first-child { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 999 !important;
             gap: 0px;
             background-color: #ff6600;
             padding: 0 16px;
