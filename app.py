@@ -99,10 +99,10 @@ def run():
             color: #ffffff;
             background-color: transparent;
             border: none;
-            padding: 12px 16px;
-            font-size: 14px;
+            padding: 10px 11px;
+            font-size: 13px;
             font-weight: 600;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             white-space: nowrap;
         }
         .stTabs [aria-selected="true"] {
@@ -140,8 +140,8 @@ def run():
      tab_tech, tab_ent, tab_sports, tab_science,
      tab_health, tab_search, tab_video) = st.tabs([
         "📰 Top News", "🌍 World", "🏛️ Nation", "💼 Business",
-        "💻 Technology", "🎬 Entertainment", "⚽ Sports",
-        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video News"
+        "💻 Tech", "🎬 Entertainment", "⚽ Sports",
+        "🔬 Science", "🏥 Health", "🔍 Search", "📺 Video"
     ])
 
     with tab_top:
