@@ -99,13 +99,9 @@ def run():
 
                 NOTE: Please wait as loading the articles and summaries may take some time.
             """)
-        av_topics = ['--Please Select A Topic!--', 'WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
-        chosen_topic = st.selectbox("Choose a Topic:", av_topics)
-        news_list = []
-        if chosen_topic == av_topics[0]:
-            st.warning("Please select a topic to proceed.")
-        else:
-            news_list = fetch_category_news(chosen_topic)
+        av_topics = ['WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
+        chosen_topic = st.radio("Choose a Topic:", av_topics, horizontal=True)
+        news_list = fetch_category_news(chosen_topic)
         if news_list:
             st.subheader(f"Here are the {chosen_topic} News for you!")
             display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
