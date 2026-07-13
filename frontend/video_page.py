@@ -130,8 +130,10 @@ def display_videos(feed, bart_model, bart_tokenizer, selected_channel, is_playli
 
 def display_video_history_in_sidebar():
     with st.sidebar.expander("Video News History"):
-        if "video_history" in st.session_state and st.session_state["video_history"]:
-            for video in st.session_state["video_history"]:
+        user_id = st.session_state.get("user_id", "default_user")
+        video_history = st.session_state.get("user_data", {}).get(user_id, {}).get("video_history", [])
+        if video_history:
+            for video in video_history:
                 st.markdown(f"**{video['title']}**")
                 st.write(f"Summary: {video['summary']}")
                 st.markdown("---")

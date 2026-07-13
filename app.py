@@ -86,12 +86,16 @@ def run():
     st.markdown(
         """
         <style>
+        /* Clear overflow on Streamlit ancestors so sticky works */
+        [data-testid="stMain"], [data-testid="stMain"] > div,
+        .block-container, .stTabs, .stTabs > div:first-child {
+            overflow: visible !important;
+        }
         /* Orange CNN-style navbar — sticky + horizontally scrollable */
-        .stTabs > div:first-child { overflow: visible !important; }
         .stTabs [data-baseweb="tab-list"] {
             position: sticky !important;
             top: 0 !important;
-            z-index: 999 !important;
+            z-index: 9999 !important;
             gap: 0px;
             background-color: #ff6600;
             padding: 0 16px;
