@@ -5,7 +5,11 @@ from PIL import Image
 
 logging.basicConfig(level=logging.INFO)
 
-st.set_page_config(page_title='INFONest🇵🇭: Get the News!📰', page_icon='./Meta/newspaper1.ico')
+st.set_page_config(
+    page_title='INFONest🇵🇭: Get the News!📰',
+    page_icon='./Meta/newspaper1.ico',
+    layout='wide'
+)
 
 from backend.news_fetcher import (
     fetch_news_from_rss, fetch_news_search_topic, fetch_category_news
@@ -27,87 +31,96 @@ def run():
 
     stop_words = stopwords_load()
 
+    st.markdown(
+        """
+        <style>
+        /* Tab bar styling */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 0px;
+            background-color: #cc0000;
+            padding: 0 16px;
+            border-radius: 0;
+        }
+        .stTabs [data-baseweb="tab"] {
+            color: #ffffff;
+            background-color: transparent;
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: rgba(255,255,255,0.2) !important;
+            color: #ffffff !important;
+            border-bottom: 3px solid #ffffff;
+        }
+        .stTabs [data-baseweb="tab-highlight"] {
+            background-color: transparent;
+        }
+        .stTabs [data-baseweb="tab-border"] {
+            display: none;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.title("INFONest🇵🇭: Get The News!📰")
     image = Image.open('./Meta/newspaper4.png')
     st.markdown(
         '<div style="display: flex; justify-content: center;">'
-        '<img src="data:image/png;base64,{}" width="400"/>'
+        '<img src="data:image/png;base64,{}" width="300"/>'
         '</div>'.format(image_to_base64(image)),
         unsafe_allow_html=True,
     )
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    if "selected_category" not in st.session_state:
-        st.session_state["selected_category"] = None
+    tab1, tab2, tab3, tab4 = st.tabs(["📰 Top News", "🔥 Hot Topics", "🔍 Search", "📺 Video News"])
 
-    category = ['--Select--', 'Top News', 'Hot Topics', 'Search', 'Video News']
-    cat_op = st.selectbox('Please Select:', category)
-    st.session_state["selected_category"] = cat_op
-
-    if cat_op in category[0:4]:
-        with st.expander("INSTRUCTIONS: How to use INFONest!"):
+    with tab1:
+        with st.expander("ℹ️ What is Top News?"):
             st.write("""
-                NOTE: Some articles may not be loaded at all as not all websites allow for the scraping of data.
+                Top News are recent and relevant news about the Philippines gathered from different sources.
+                It covers the recent developments or topics that are currently trending in the country.
 
-                1. Select a category of your choice! (i.e. Top News!, Hot Topics, Search, and Video News)
-
-                2. If you pick Top News, Hot Topics, or Search, the application will load 5 of the recent and newest articles
-                based on the category chosen.
-
-                3. The articles loaded will have their own summaries. (NOTE: Please wait as it may take time to load the
-                articles and summaries!)
-
-                4. Use the summaries as overview for what each of the news is about!
-
-                5. Select Video News to watch and summarize the latest Philippine news videos from YouTube.
-            """)
-
-    if cat_op == category[0]:
-        st.warning('Please Select a Category!')
-
-    elif cat_op == category[1]:
-        with st.expander("PLEASE READ! : What is Top News?"):
-            st.write("""
-                NOTE: Please wait as the loading of the articles and summaries may take some time!
-
-                - Top News are recent and relevant news about the Philippines gathered from different sources!
-
-                - What it covers will be the recent developments or topics that are currently trending in the country.
+                NOTE: Some articles may not load as not all websites allow scraping. Please wait as
+                loading the articles and summaries may take some time.
             """)
         st.subheader("Here Are the Top News For You!")
         news_list = fetch_news_from_rss('https://news.google.com/news/rss?hl=en&gl=PH&ceid=PH%3Aen')
         display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Top News")
 
-    elif cat_op == category[2]:
-        with st.expander("PLEASE READ! : What is Hot Topics?"):
+    with tab2:
+        with st.expander("ℹ️ What is Hot Topics?"):
             st.write("""
-                NOTE: Please wait as the loading of the articles and summaries may take some time!
+                Hot Topics offers a selection of topics from which you can choose.
+                Topics include: WORLD, NATION, BUSINESS, TECHNOLOGY, ENTERTAINMENT, SPORTS, SCIENCE, and HEALTH.
 
-                - Hot Topics offers a selection of topics from which the user can choose from.
-
-                - The topics are: WORLD, NATION, BUSINESS, TECHNOLOGY, ENTERTAINMENT, SPORTS, SCIENCE, and HEALTH.
+                NOTE: Please wait as loading the articles and summaries may take some time.
             """)
         av_topics = ['--Please Select A Topic!--', 'WORLD', 'NATION', 'BUSINESS', 'TECHNOLOGY', 'ENTERTAINMENT', 'SPORTS', 'SCIENCE', 'HEALTH']
         chosen_topic = st.selectbox("Choose a Topic:", av_topics)
         news_list = []
         if chosen_topic == av_topics[0]:
-            st.warning("Please select a valid topic to proceed.")
+            st.warning("Please select a topic to proceed.")
         else:
             news_list = fetch_category_news(chosen_topic)
         if news_list:
             st.subheader(f"Here are the {chosen_topic} News for you!")
             display_news(news_list, 5, stop_words, bart_tokenizer, bart_model, "Hot Topics")
 
-    elif cat_op == category[3]:
-        with st.expander("PLEASE READ!: Instructions for Search"):
+    with tab3:
+        with st.expander("ℹ️ How to Search"):
             st.write("""
-                NOTE: Please wait as the loading of the articles and summaries may take some time!
+                Enter any topic in the search bar to find related news articles.
+                The app will fetch up to 5 news articles related to your topic.
 
-                1. Enter a topic in the search bar below to find news articles.
-                2. The app will fetch up to 5 news articles related to your topic.
+                NOTE: Please wait as loading the articles and summaries may take some time.
             """)
         user_topic = st.text_input(
             "Enter a topic to search:",
-            placeholder="e.g., Sports, Technology",
+            placeholder="e.g., Sports, Technology, Politics",
             key="search_topic_input"
         )
         if user_topic:
@@ -127,32 +140,24 @@ def run():
             else:
                 st.warning("No news articles found for this topic.")
         else:
-            st.warning("Please enter a topic to search.")
+            st.info("Enter a topic above to get started.")
 
-    elif cat_op == category[4]:
+    with tab4:
         run_youtube_summarizer()
 
-    st.markdown(
-        """
-        <style>
-        .sidebar .sidebar-header { font-size: 30px !important; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.sidebar.header("History")
-    st.sidebar.empty().text("\n")
+    st.sidebar.header("📋 History")
+    st.sidebar.markdown("---")
 
     for cat in ["Top News", "Hot Topics", "Search"]:
-        with st.sidebar.expander(f"{cat} History", expanded=True):
+        with st.sidebar.expander(f"{cat} History", expanded=False):
             history_data = st.session_state["history"].get(cat, [])
             if history_data:
                 for i, article in enumerate(history_data[-10:], 1):
                     st.markdown(f"**{i}. {article['title']}**")
-                    st.markdown(f"Summary: {article['summary']}")
+                    st.markdown(f"{article['summary']}")
                     st.markdown("---")
             else:
-                st.write("No history available yet.")
+                st.write("No history yet.")
 
     display_video_history_in_sidebar()
 
