@@ -8,9 +8,34 @@ import os
 import time
 import torch
 import logging
+import platform
+import shutil
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled, NoTranscriptFound
 
 logger = logging.getLogger(__name__)
+
+
+def _get_cookie_source():
+    """Return yt-dlp cookie options using the best available source on this system.
+    Priority: cookies.txt file → auto-detected browser → no cookies (cloud/server).
+    """
+    if os.path.exists('cookies.txt'):
+        logger.info("Using cookies.txt for YouTube authentication.")
+        return {'cookiefile': 'cookies.txt'}
+
+    system = platform.system()
+    candidates = {
+        'Windows': [('chrome', ['chrome']), ('edge', ['msedge']), ('firefox', ['firefox']), ('brave', ['brave'])],
+        'Darwin':  [('chrome', ['Google Chrome']), ('firefox', ['firefox']), ('safari', ['safari']), ('brave', ['brave'])],
+    }.get(system, [])  # Linux/cloud: no browsers, return empty
+
+    for browser, exes in candidates:
+        if any(shutil.which(exe) for exe in exes):
+            logger.info(f"Auto-detected browser for cookies: {browser}")
+            return {'cookiesfrombrowser': (browser,)}
+
+    logger.warning("No cookie source found. YouTube may block requests as a bot.")
+    return {}
 
 
 @st.cache_resource
@@ -31,19 +56,14 @@ def download_audio(url, output_path="downloads/audio"):
         }],
         'outtmpl': f"{output_path}.%(ext)s",
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'cookiefile': 'cookies.txt',
         'http_headers': {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Referer': 'https://www.youtube.com/',
         },
+        **_get_cookie_source(),
     }
     try:
-        if not os.path.exists('cookies.txt'):
-            logger.error("cookies.txt not found. Proceeding without cookies.")
-            st.warning("Cookies file not found. This may trigger YouTube bot detection.")
-        else:
-            logger.info("Using cookies.txt for YouTube authentication.")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.extract_info(url, download=True)
             downloaded_file = f"{output_path}.mp3"
@@ -55,13 +75,6 @@ def download_audio(url, output_path="downloads/audio"):
     except Exception as e:
         st.error(f"Error downloading audio: {str(e)}")
         logger.error(f"Error downloading audio for video {video_id}: {str(e)}")
-        if "Requested format is not available" in str(e):
-            try:
-                with yt_dlp.YoutubeDL({'listformats': True}) as ydl:
-                    formats_info = ydl.extract_info(url, download=False)
-                    logger.info(f"Available formats for video {video_id}: {formats_info.get('formats', [])}")
-            except Exception as format_error:
-                logger.error(f"Could not retrieve formats for video {video_id}: {str(format_error)}")
         return None
 
 
