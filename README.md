@@ -16,7 +16,11 @@ A Philippine-focused news aggregator and summarizer built with Streamlit. Fetche
 ### 📺 Video Mode
 - Fetches the latest videos from selected Philippine and international YouTube news channels:
   - Philippine News Agency, INQUIRER.NET, PTV Philippines, ANC 24/7, Rappler, Al Jazeera English
-- Transcribes audio using OpenAI Whisper, then summarizes with DistilBART
+- Transcript fallback chain (tries each in order):
+  1. **YouTube Transcript API** — uses auto-generated or manual captions, no cookies needed, works on Streamlit Cloud
+  2. **yt-dlp subtitles** — extracts subtitle files directly from YouTube
+  3. **Whisper transcription** — downloads audio and transcribes locally as a last resort
+- Cookie auto-detection for audio downloads: uses `cookies.txt` if present, otherwise reads directly from an installed browser (Chrome, Edge, Firefox, Brave), or proceeds without cookies on cloud servers
 - Video history saved in sidebar
 
 ### ⚙️ Settings Sidebar
@@ -92,6 +96,12 @@ Then open your browser and go to:
 ```
 http://localhost:8000
 ```
+
+### Video Mode — cookies.txt (optional)
+
+For reliable YouTube audio downloads, export your browser cookies to `cookies.txt` in the project root using the **"Get cookies.txt LOCALLY"** browser extension (Chrome/Firefox). If the file is absent, the app will try to read cookies from an installed browser automatically, or fall back to no cookies. News mode works without any cookies.
+
+> **Note:** Never commit `cookies.txt` to GitHub — it contains your personal YouTube session.
 
 ---
 
